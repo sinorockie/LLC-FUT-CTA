@@ -70,10 +70,12 @@ if __name__ == '__main__':
         for i in range(len(df)):
             if type(df.loc[i, '合约']) is not str:
                 continue
-            row = daily_fut_quote_raw_data[(daily_fut_quote_raw_data['日期'] == df.iloc[i, '日期']) & (
-                    daily_fut_quote_raw_data['合约'] == df.iloc[i, '合约'].split('.')[0].upper())]
-            df.iloc[i, '开盘价'] = row['开'].values[0]
-            df.iloc[i, '收盘价'] = row['收'].values[0]
+            row = daily_fut_quote_raw_data[(daily_fut_quote_raw_data['日期'] == df.iloc[i, 0]) & (
+                    daily_fut_quote_raw_data['合约'] == df.iloc[i, 1].split('.')[0].upper())]
+            if len(row) == 0:
+                continue
+            df.iloc[i, 2] = row['开'].values[0]
+            df.iloc[i, 3] = row['收'].values[0]
         df['调整比例'] = df['收盘价'].shift() / df['开盘价']
         df['调整比例'] = np.where(df['合约'] != df['合约'].shift(), df['调整比例'], 1)
         df['调整比例'] = df['调整比例'].fillna(1)
