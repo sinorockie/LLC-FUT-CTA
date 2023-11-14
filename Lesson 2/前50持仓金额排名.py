@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df_volume = pd.read_excel('期货量化实践_持仓前50主连数据.xlsx', sheet_name='20231023持仓量（单边）')
+df_volume = pd.read_excel('期货量化实践_原始数据_主连数据.xlsx', sheet_name='20231023持仓量（单边）')
 
 # 取第2列和第4列并重命名为'合约'和'持仓量' 并忽略第一行的数据
 df_volume = df_volume.iloc[1:, [1, 3]]
@@ -12,7 +12,7 @@ df_volume['主力合约'] = df_volume['主力合约'].str.split('.').str[0]
 # 删除最后一个字母并转大写
 df_volume['主力合约'] = df_volume['主力合约'].str[:-1].str.upper()
 
-df_price = pd.read_excel('期货量化实践_持仓前50主连数据.xlsx', sheet_name='近2年主力连续')
+df_price = pd.read_excel('期货量化实践_原始数据_主连数据.xlsx', sheet_name='近2年主力连续')
 df_close = pd.DataFrame(df_price.iloc[3:, 3::3])
 # 使用第二列的日期作为index
 df_close.index = df_price.iloc[3:, 1]
@@ -20,7 +20,7 @@ df_close.columns = df_price.iloc[0, 3::3]
 # column重命名 删除'.'之后的部分 并删除对后一个字母 并转大写
 df_close.columns = df_close.columns.str.split('.').str[0].str[:-1].str.upper()
 
-df_multi = pd.read_excel('合约乘数.xlsx', sheet_name='主表')
+df_multi = pd.read_excel('期货量化实践_原始数据_合约乘数.xlsx', sheet_name='主表')
 # 仅保留名字和合约乘数两列 并去重
 df_multi = df_multi[['名字', '合约乘数']].drop_duplicates()
 # 合并合约乘数
