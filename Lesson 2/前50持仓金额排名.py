@@ -20,7 +20,7 @@ df_close.columns = df_price.iloc[0, 3::3]
 # column重命名 删除'.'之后的部分 并删除对后一个字母 并转大写
 df_close.columns = df_close.columns.str.split('.').str[0].str[:-1].str.upper()
 
-df_multi = pd.read_excel('期货量化实践_原始数据_合约乘数.xlsx', sheet_name='主表')
+df_multi = pd.read_excel('期货量化实践_合约乘数(暂存).xlsx', sheet_name='主表')
 # 仅保留名字和合约乘数两列 并去重
 df_multi = df_multi[['名字', '合约乘数']].drop_duplicates()
 # 合并合约乘数
