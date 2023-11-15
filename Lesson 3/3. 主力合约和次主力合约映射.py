@@ -51,7 +51,7 @@ with pd.ExcelWriter('../output/期货量化实践_主力合约复权价格_近�
         sheet1['前主力合约结算价'] = np.nan
         sheet1['前主力最后交易日期'] = datetime.datetime.strptime('2023-11-13', '%Y-%m-%d')
         for i in range(len(sheet1)):
-            row = df3[(df3['日期'] == trade_date) & (df3['合约'] == sheet1.iloc[i, 22])]
+            row = df3[(df3['日期'] == sheet1.iloc[i, 1]) & (df3['合约'] == sheet1.iloc[i, 22])]
             if len(row) == 0:
                 continue
             sheet1.iloc[i, 23] = row['开'].values[0]
