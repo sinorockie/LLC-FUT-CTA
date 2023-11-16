@@ -47,7 +47,7 @@ for i in range(len(trade_date_series)):
             budget_map[item[0]] = each_budget
             sheet = profit_df[item[0]]
             row = sheet[sheet['日期'] == start_date]
-            amount_map[item[0]] = int(each_budget / 4 / row.iloc[0]['策略开仓价'] / row.iloc[0]['合约乘数']) * row.iloc[0]['合约乘数']
+            amount_map[item[0]] = int(each_budget / 4 / 0.15 / row.iloc[0]['策略开仓价'] / row.iloc[0]['合约乘数']) * row.iloc[0]['合约乘数']
         print(budget_map)
         print(amount_map)
         for key in amount_map.keys():
