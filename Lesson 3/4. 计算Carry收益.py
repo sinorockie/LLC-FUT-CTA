@@ -63,7 +63,7 @@ with pd.ExcelWriter('../output/期货量化实践_Carry收益.xlsx') as writer:
                             sheet.loc[i, '最优价格'] = sheet.loc[i, '最低价']
                         else:
                             sheet.loc[i, '最优价格'] = sheet.loc[i - 1, '最优价格']
-                        if sheet.loc[i, '最优价格'] + 2.5 * sheet.loc[i, 'ATR'] < sheet.loc[i, '收盘价']:
+                        if sheet.loc[i, '最优价格'] + 2.5 * sheet.loc[i, 'ATR'] < sheet.loc[i, '收盘价'] or sheet.loc[i, '日期'] == adjust_date:
                             sheet.loc[i, '平仓信号'] = 1
                             sheet.loc[i, '策略结算价'] = sheet.loc[i, '收盘价']
                         else:
@@ -75,7 +75,7 @@ with pd.ExcelWriter('../output/期货量化实践_Carry收益.xlsx') as writer:
                             sheet.loc[i, '最优价格'] = sheet.loc[i, '最高价']
                         else:
                             sheet.loc[i, '最优价格'] = sheet.loc[i - 1, '最优价格']
-                        if sheet.loc[i, '最优价格'] - 2.5 * sheet.loc[i, 'ATR'] > sheet.loc[i, '收盘价']:
+                        if sheet.loc[i, '最优价格'] - 2.5 * sheet.loc[i, 'ATR'] > sheet.loc[i, '收盘价'] or sheet.loc[i, '日期'] == adjust_date:
                             sheet.loc[i, '平仓信号'] = 1
                             sheet.loc[i, '策略结算价'] = sheet.loc[i, '收盘价']
                         else:
@@ -116,5 +116,6 @@ with pd.ExcelWriter('../output/期货量化实践_Carry收益.xlsx') as writer:
                     start_date = sheet.loc[i + 1, '日期']
                     adjust_date = start_date + datetime.timedelta(days=30)
         sheet['盈亏'] = sheet['策略收益'] + sheet['移仓收益']
+        # 删除第一列
+        sheet.drop(sheet.columns[0], axis=1, inplace=True)
         sheet.to_excel(writer, sheet_name=sheet_name, index=False)
-        break
