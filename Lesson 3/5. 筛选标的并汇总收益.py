@@ -1,6 +1,5 @@
 import datetime
 
-import numpy as np
 import pandas as pd
 
 profit_df = pd.read_excel("../output/期货量化实践_Carry收益.xlsx", None)
@@ -93,12 +92,11 @@ for i in range(len(trade_date_series)):
 df[('', '当日收益')] = df.xs('持仓收益', axis=1, level=1).sum(axis=1)
 # 第一天初始化可用资金为100000000
 df.iloc[0, 0] = 100000000
-# 每一行当日可用资金等于前一日可用资金加上前一日收益
-# 计算年化收益率 年化收益率=(期末净值/期初净值)^(1/年数)-1
 for i in range(len(df)):
     if i == len(df) - 1:
         print()
     if i > 0:
+        # 每一行当日可用资金等于前一日可用资金加上前一日收益
         df.iloc[i, 0] = df.iloc[i - 1, 0] + df.iloc[i - 1, 1]
     # 取前252个交易日的数据 不足252个交易日则取所有交易日的数据
     rows = df.iloc[max(0, i - 252):(i+1), :]
