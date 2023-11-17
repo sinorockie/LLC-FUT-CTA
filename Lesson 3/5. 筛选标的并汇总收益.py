@@ -1,6 +1,7 @@
 import datetime
 
 import pandas as pd
+import dataframe_image as dfi
 
 profit_df = pd.read_excel("../output/期货量化实践_Carry收益.xlsx", None)
 
@@ -34,6 +35,7 @@ start_date = trade_date_series[0]
 adjust_date = trade_date_series[0] + datetime.timedelta(days=30)
 budget_map = {}
 amount_map = {}
+carry_ma10_df = pd.DataFrame()
 for i in range(len(trade_date_series)):
     if trade_date_series[i] == start_date:
         for sheet_name in profit_df:
@@ -44,6 +46,19 @@ for i in range(len(trade_date_series)):
             if len(row) == 0:
                 continue
             carry_ma10_map[sheet_name] = row.iloc[0]['Carry收益(10日平均)']
+        # 按照Carry收益(10日平均)排序从大到小排序
+        carry_ma10_list = sorted(carry_ma10_map.items(), key=lambda x: x[1], reverse=True)
+        time_str = start_date.strftime('%Y-%m-%d')
+        new_columns = pd.MultiIndex.from_tuples(
+            [
+                (time_str, '品种'),
+                (time_str, 'Carry收益(10日平均)')
+            ]
+        )
+        for column in new_columns:
+            carry_ma10_df[column] = None
+        carry_ma10_df[(time_str, '品种')] = [item[0] for item in carry_ma10_list]
+        carry_ma10_df[(time_str, 'Carry收益(10日平均)')] = [item[1] for item in carry_ma10_list]
         # 取大于0 且从大到小排序的前20%品种
         carry_ma10_map_positive = {k: v for k, v in carry_ma10_map.items() if not pd.isna(v) and v > 0}
         carry_ma10_map_positive = sorted(carry_ma10_map_positive.items(), key=lambda x: x[1], reverse=True)
@@ -87,6 +102,14 @@ for i in range(len(trade_date_series)):
                 adjust_date = start_date + datetime.timedelta(days=30)
                 budget_map = {}
                 amount_map = {}
+carry_ma10_df.columns = pd.MultiIndex.from_tuples(carry_ma10_df.columns)
+# 删除第一行
+carry_ma10_df = carry_ma10_df.drop(index=0)
+# 所有Carry收益(10日平均)转换为百分比 小数点后两位
+carry_ma10_df[carry_ma10_df.columns[1]] = carry_ma10_df[carry_ma10_df.columns[1]].apply(lambda x: round(x * 100, 2))
+carry_ma10_df.to_excel('../output/期货量化实践_Carry收益(10日平均).xlsx', sheet_name='Carry收益(10日平均)')
+# 导出图片
+dfi.export(carry_ma10_df, '../output/期货量化实践_Carry收益(10日平均).png', max_cols=-1)
 
 # 当日收益等于所有持仓收益之和
 df[('', '当日收益')] = df.xs('持仓收益', axis=1, level=1).sum(axis=1)
