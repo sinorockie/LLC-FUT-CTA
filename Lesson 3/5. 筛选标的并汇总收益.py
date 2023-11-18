@@ -1,7 +1,7 @@
 import datetime
 
 import pandas as pd
-import dataframe_image as dfi
+# import dataframe_image as dfi
 
 profit_df = pd.read_excel("../output/期货量化实践_Carry收益.xlsx", None)
 
@@ -109,7 +109,7 @@ carry_ma10_df = carry_ma10_df.drop(index=0)
 carry_ma10_df[carry_ma10_df.columns[1]] = carry_ma10_df[carry_ma10_df.columns[1]].apply(lambda x: round(x * 100, 2))
 carry_ma10_df.to_excel('../output/期货量化实践_Carry收益(10日平均).xlsx', sheet_name='Carry收益(10日平均)')
 # 导出图片
-dfi.export(carry_ma10_df, '../output/期货量化实践_Carry收益(10日平均).png', max_cols=-1)
+# dfi.export(carry_ma10_df, '../output/期货量化实践_Carry收益(10日平均).png', max_cols=-1)
 
 # 当日收益等于所有持仓收益之和
 df[('', '当日收益')] = df.xs('持仓收益', axis=1, level=1).sum(axis=1)
@@ -128,8 +128,15 @@ for i in range(len(df)):
     df.iloc[i, 2] = profit / budget
     # 计算夏普比率 夏普比率=(年化收益率-无风险利率)/年化收益率的标准差
     df.iloc[i, 3] = df.iloc[i, 2] / rows.iloc[:, 2].std()
+    # 可用资金最大值
+    max_balance = rows.iloc[:, 0].max()
+    # 可用资金最大值对应的日期
+    max_balance_date = rows[rows.iloc[:, 0] == max_balance].index[0]
+    # 在rows数据范围内可用资金最大值后的数据
+    rows = rows[rows.index > max_balance_date]
+    min_balance = rows.iloc[:, 0].min()
     # 计算Calmar Ratio(卡玛比率) Calmar Ratio(卡玛比率)=年化收益率/最大回撤
     if i > 0:
-        df.iloc[i, 4] = df.iloc[i, 2] / (rows.iloc[:, 0].max() - rows.iloc[:, 0].min()) * rows.iloc[:, 0].max()
+        df.iloc[i, 4] = df.iloc[i, 2] / (max_balance - min_balance) * max_balance
 
 df.to_excel('../output/期货量化实践_策略收益.xlsx', sheet_name='策略收益')

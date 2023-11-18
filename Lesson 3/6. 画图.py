@@ -56,11 +56,13 @@ profit_df = profit_df.iloc[:, [0, 1, 2, 3]]
 profit_df = profit_df.drop(index=0)
 # 重命名列名
 profit_df.columns = ['日期', '当日可用资金', '当日收益', '年化收益率']
+# 求累计收益
+profit_df['累计收益'] = profit_df['当日收益'].cumsum()
 # 将日期列设置为索引列
 profit_df = profit_df.set_index('日期')
 # 画折线图
 plt.plot(profit_df.index, profit_df['当日收益'], 'b', label='当日收益')
-plt.plot(profit_df.index, profit_df['当日可用资金'], 'g', label='当日可用资金')
+plt.plot(profit_df.index, profit_df['累计收益'], 'g', label='累计收益')
 plt.xlabel("日期")
 plt.legend()
 # 画图例
