@@ -1,7 +1,9 @@
 import datetime
+import platform
 
 import pandas as pd
 # import dataframe_image as dfi
+from matplotlib import pyplot as plt
 
 profit_df = pd.read_excel("../output/期货量化实践_Carry收益.xlsx", None)
 
@@ -13,6 +15,32 @@ for sheet_name in profit_df:
     # 取最后一行
     trade_notional_map[sheet_name] = sheet.iloc[-1]['成交金额(180日平均)']
     trade_date_series = list(sheet['日期'][9:])
+# 将dict数据转换为dataframe 日期为索引列
+trade_notional_df = pd.DataFrame.from_dict(trade_notional_map, orient='index', columns=['成交金额(180日平均)'])
+trade_notional_df.index.name = '品种'
+# 按照成交金额(180日平均)排序从大到小排序
+trade_notional_df.fillna(0, inplace=True)
+trade_notional_df = trade_notional_df.sort_values(by=['成交金额(180日平均)'], ascending=False)
+trade_notional_df.plot.bar()
+# 大于等于50亿画一条横线
+plt.axhline(y=5000000000, color='r', linestyle='-')
+# 小于50亿的品种背景灰色
+for i in range(len(trade_notional_df)):
+    if trade_notional_df.iloc[i]['成交金额(180日平均)'] < 5000000000:
+        plt.axvspan(i - 0.5, i + 0.5, facecolor='gray', alpha=0.3)
+# 导出图片
+if platform.system() == 'Windows':
+    font = ['Microsoft YaHei']
+else:
+    font = ['Songti SC']
+plt.rcParams['font.sans-serif'] = font
+# x轴标签旋转0度
+plt.xticks(rotation=0)
+plt.xlabel('')
+# 宽度
+plt.gcf().set_size_inches(18, 7)
+# 保存图片
+plt.savefig("../output/期货量化实践_成交金额(180日平均).png")
 
 trade_notional_map = {k: v for k, v in trade_notional_map.items() if not pd.isna(v) and v >= 5000000000}
 
@@ -103,8 +131,6 @@ for i in range(len(trade_date_series)):
                 budget_map = {}
                 amount_map = {}
 carry_ma10_df.columns = pd.MultiIndex.from_tuples(carry_ma10_df.columns)
-# 删除第一行
-carry_ma10_df = carry_ma10_df.drop(index=0)
 # 所有Carry收益(10日平均)转换为百分比 小数点后两位
 carry_ma10_df[carry_ma10_df.columns[1]] = carry_ma10_df[carry_ma10_df.columns[1]].apply(lambda x: round(x * 100, 2))
 carry_ma10_df.to_excel('../output/期货量化实践_Carry收益(10日平均).xlsx', sheet_name='Carry收益(10日平均)')
@@ -121,11 +147,10 @@ for i in range(len(df)):
     if i > 0:
         # 每一行当日可用资金等于前一日可用资金加上前一日收益
         df.iloc[i, 0] = df.iloc[i - 1, 0] + df.iloc[i - 1, 1]
-    # 取前252个交易日的数据 不足252个交易日则取所有交易日的数据
-    rows = df.iloc[max(0, i - 252):(i+1), :]
+    # 总收益 / 100000000 * 252 / 交易日数
+    rows = df.iloc[0:(i+1), :]
     profit = rows.iloc[:, 1].sum()
-    budget = rows.iloc[0, 0]
-    df.iloc[i, 2] = profit / budget
+    df.iloc[i, 2] = profit / 100000000 * 252 / (i + 1) * 100
     # 计算夏普比率 夏普比率=(年化收益率-无风险利率)/年化收益率的标准差
     df.iloc[i, 3] = df.iloc[i, 2] / rows.iloc[:, 2].std()
     # 可用资金最大值
