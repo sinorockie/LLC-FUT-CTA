@@ -48,9 +48,8 @@ with pd.ExcelWriter('../output/期货量化实践_主力合约复权价格.xlsx'
             df.iloc[i, 6] = row['结'].values[0]
             df.iloc[i, 7] = row['成交量'].values[0]
             df.iloc[i, 8] = row['持仓量'].values[0]
-        df['调整比例'] = df['收盘价'].shift() / df['开盘价']
-        df['调整比例'] = np.where(df['合约'] != df['合约'].shift(), df['调整比例'], 1)
-        df['调整比例'] = df['调整比例'].fillna(1)
-        df['开盘价(调整后)'] = df['开盘价'] * df['调整比例'].cumprod()
-        df['收盘价(调整后)'] = df['收盘价'] * df['调整比例'].cumprod()
+        df['调整比例'] = df['收盘价'].shift() - df['开盘价']
+        df['调整比例'] = np.where(df['合约'] != df['合约'].shift(), df['调整比例'], 0)
+        df['调整比例'] = df['调整比例'].fillna(0)
+        df['收盘价(调整后)'] = df['收盘价'] + df['调整比例'].cumsum()
         df.to_excel(writer, sheet_name=column)
