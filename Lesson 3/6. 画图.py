@@ -14,7 +14,7 @@ for image_name in ['TA', 'SS']:
     # 读取sheet名为TA的数据
     sheet = carry_df['SS']
     # 依据日期 画折线图 收盘价 次主力收盘价
-    sheet.plot(x='日期', y=['收盘价', '次主力合约收盘价'])
+    sheet.plot(x='日期', y=['收盘价', '次主力收盘价'])
     # 保存到图片 需要支持中文
     plt.rcParams['font.sans-serif'] = font
     # x轴标签旋转0度
@@ -27,12 +27,12 @@ for image_name in ['TA', 'SS']:
     # 选取2021-11-05至2022-02-07的数据 重新画图
     sheet = sheet[(sheet['日期'] >= '2021-11-05') & (sheet['日期'] <= '2022-02-07')]
     # 依据日期 画折线图 收盘价 次主力收盘价
-    sheet.plot(x='日期', y=['收盘价', '次主力合约收盘价'])
+    sheet.plot(x='日期', y=['收盘价', '次主力收盘价'])
     # 2021-12-06至2022-01-04的数据 需要特别标注 且区间背景灰色
     sheet2 = sheet[(sheet['日期'] >= '2021-12-06') & (sheet['日期'] <= '2022-01-04')]
     # 画折线图 收盘价 次主力收盘价
     plt.plot(sheet2['日期'], sheet2['收盘价'], 'r', label='收盘价')
-    plt.plot(sheet2['日期'], sheet2['次主力合约收盘价'], 'b', label='次主力合约收盘价')
+    plt.plot(sheet2['日期'], sheet2['次主力收盘价'], 'b', label='次主力收盘价')
     # 画区间背景
     plt.axvspan('2021-12-06', '2022-01-04', facecolor='gray', alpha=0.3)
     # 画图例

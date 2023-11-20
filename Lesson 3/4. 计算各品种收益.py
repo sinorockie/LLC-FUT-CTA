@@ -8,15 +8,6 @@ with pd.ExcelWriter('../output/期货量化实践_Carry收益.xlsx') as writer:
     for sheet_name in carry_df:
         print(sheet_name)
         sheet = carry_df[sheet_name]
-        sheet['成交金额'] = sheet['收盘价'] * sheet['成交量'] * sheet['合约乘数']
-        sheet['成交金额(180日平均)'] = sheet['成交金额'].rolling(180).mean()
-        sheet['Carry收益'] = sheet.apply(lambda x: (x['收盘价'] / x['次主力合约收盘价'] - 1) * 365 / (
-                pd.to_datetime(x['次主力最后交易日期']) - pd.to_datetime(x['最后交易日期'])).days, axis=1)
-        sheet['Carry收益(10日平均)'] = sheet['Carry收益'].rolling(10).mean()
-        sheet['TR'] = 0
-        for i in range(1, len(sheet)):
-            sheet.loc[i, 'TR'] = max(sheet.loc[i, '最高价'], sheet.loc[i - 1, '收盘价']) - min(sheet.loc[i, '最低价'], sheet.loc[i - 1, '收盘价'])
-        sheet['ATR'] = sheet['TR'].rolling(10).mean()
         sheet['最优价格'] = 0
         sheet['平仓信号'] = 0
         sheet['策略开仓方向'] = 0
@@ -27,9 +18,11 @@ with pd.ExcelWriter('../output/期货量化实践_Carry收益.xlsx') as writer:
         sheet['移仓开仓价'] = 0
         sheet['移仓结算价'] = 0
         sheet['移仓收益'] = 0
-        start_date = sheet.loc[9, '日期']
+        start_date = sheet.loc[179, '日期']
         adjust_date = start_date + datetime.timedelta(days=30)
-        for i in range(9, len(sheet)):
+        for i in range(len(sheet)):
+            if sheet.loc[i, '日期'] < start_date:
+                continue
             if sheet.loc[i, '日期'] == start_date:
                 sheet.loc[i, '平仓信号'] = 0
                 if sheet.loc[i, 'Carry收益(10日平均)'] > 0:
@@ -85,8 +78,8 @@ with pd.ExcelWriter('../output/期货量化实践_Carry收益.xlsx') as writer:
                         if sheet.loc[i, '策略开仓方向'] > 0:
                             # 卖空
                             sheet.loc[i, '最优价格'] = sheet.loc[i, '最低价']
-                            sheet.loc[i, '策略结算价'] = sheet.loc[i, '前主力合约开盘价']
-                            sheet.loc[i, '策略收益'] = sheet.loc[i, '策略昨日结算价'] - sheet.loc[i, '前主力合约开盘价']
+                            sheet.loc[i, '策略结算价'] = sheet.loc[i, '前主力开盘价']
+                            sheet.loc[i, '策略收益'] = sheet.loc[i, '策略昨日结算价'] - sheet.loc[i, '前主力开盘价']
                             sheet.loc[i, '移仓开仓价'] = sheet.loc[i, '开盘价']
                             sheet.loc[i, '移仓昨日结算价'] = 0
                             sheet.loc[i, '移仓结算价'] = sheet.loc[i, '结算价']
@@ -94,8 +87,8 @@ with pd.ExcelWriter('../output/期货量化实践_Carry收益.xlsx') as writer:
                         else:
                             # 买多
                             sheet.loc[i, '最优价格'] = sheet.loc[i, '最高价']
-                            sheet.loc[i, '策略结算价'] = sheet.loc[i, '前主力合约开盘价']
-                            sheet.loc[i, '策略收益'] = sheet.loc[i, '前主力合约开盘价'] - sheet.loc[i, '策略昨日结算价']
+                            sheet.loc[i, '策略结算价'] = sheet.loc[i, '前主力开盘价']
+                            sheet.loc[i, '策略收益'] = sheet.loc[i, '前主力开盘价'] - sheet.loc[i, '策略昨日结算价']
                             sheet.loc[i, '移仓开仓价'] = sheet.loc[i, '开盘价']
                             sheet.loc[i, '移仓昨日结算价'] = 0
                             sheet.loc[i, '移仓结算价'] = sheet.loc[i, '结算价']
