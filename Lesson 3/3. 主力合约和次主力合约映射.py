@@ -80,7 +80,7 @@ with pd.ExcelWriter('../output/期货量化实践_主力合约复权价格_次�
         sheet1['Carry收益'] = sheet1.apply(lambda x: (x['收盘价(调整后)'] / x['次主力收盘价(调整后)'] - 1) * 365 / (x['次主力最后交易日期'] - x['最后交易日期']).astype('timedelta64[D]').astype(int) if x['合约'] is not None and x['次主力合约'] is not None else np.nan, axis=1)
         sheet1.to_excel(writer, sheet_name=sheet_name, index=False)
         # 依据日期 画折线图 收盘价 次主力收盘价
-        sheet1.plot(x='日期', y=['收盘价', '次主力合约收盘价'])
+        sheet1.plot(x='日期', y=['收盘价', '次主力收盘价'])
         # 保存到图片 需要支持中文
         plt.rcParams['font.sans-serif'] = font
         # x轴标签旋转0度
