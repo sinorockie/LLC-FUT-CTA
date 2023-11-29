@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 result_map = {}
 average_days = 10
 period_days = 21
+
+
 def test_loop():
     carry_df = pd.read_excel("../output/期货量化实践_主力合约复权价格_次主力合约价格_合并.xlsx", None)
 
@@ -19,7 +21,9 @@ def test_loop():
             # 当成交量以及持仓量均在 10 日均线之下则为缩量状态
             sheet['成交量(10日平均)'] = sheet['成交量'].rolling(average_days).mean()
             sheet['持仓量(10日平均)'] = sheet['持仓量'].rolling(average_days).mean()
-            sheet['缩量信号'] = sheet.apply(lambda x: 1 if x['成交量(10日平均)'] > x['成交量'] and x['持仓量(10日平均)'] > x['持仓量'] else 0, axis=1)
+            sheet['缩量信号'] = sheet.apply(
+                lambda x: 1 if x['成交量(10日平均)'] > x['成交量'] and x['持仓量(10日平均)'] > x['持仓量'] else 0,
+                axis=1)
             # 计算 ATR
             sheet['TR1'] = sheet['最高价'] - sheet['最低价']
             sheet['TR2'] = abs(sheet['最高价'] - sheet.shift(1)['收盘价'])
@@ -31,9 +35,14 @@ def test_loop():
             sheet['收盘价(10日平均)'] = sheet['收盘价'].rolling(average_days).mean()
             # 计算开仓信号
             # 当 Carry 为正（负）且主力合约收盘价在均线下（上）方时，满仓开仓。
-            sheet['开仓信号'] = sheet.apply(lambda x: 1 if (x['Carry收益(10日平均)'] > 0 and x['收盘价(10日平均)'] > x['收盘价']) or (x['Carry收益(10日平均)'] < 0 and x['收盘价(10日平均)'] < x['收盘价']) else 0, axis=1)
+            sheet['开仓信号'] = sheet.apply(
+                lambda x: 1 if (x['Carry收益(10日平均)'] > 0 and x['收盘价(10日平均)'] > x['收盘价']) or (
+                            x['Carry收益(10日平均)'] < 0 and x['收盘价(10日平均)'] < x['收盘价']) else 0, axis=1)
             # 当 Carry 为正（负）且主力合约收盘价在均线上（下）方时，若缩量，半仓开仓
-            sheet['开仓信号'] = sheet.apply(lambda x: 0.5 if (x['Carry收益(10日平均)'] > 0 and x['收盘价(10日平均)'] < x['收盘价']) or (x['Carry收益(10日平均)'] < 0 and x['收盘价(10日平均)'] > x['收盘价']) and x['缩量信号'] == 1 else x['开仓信号'], axis=1)
+            sheet['开仓信号'] = sheet.apply(
+                lambda x: 0.5 if (x['Carry收益(10日平均)'] > 0 and x['收盘价(10日平均)'] < x['收盘价']) or (
+                            x['Carry收益(10日平均)'] < 0 and x['收盘价(10日平均)'] > x['收盘价']) and x[
+                                     '缩量信号'] == 1 else x['开仓信号'], axis=1)
             sheet['最优价格'] = 0.
             sheet['平仓信号'] = 0.
             sheet['策略开仓方向'] = 0.
@@ -86,7 +95,8 @@ def test_loop():
                                 sheet.loc[i, '平仓信号'] = 1
                                 sheet.loc[i, '策略结算价'] = sheet.loc[i, '收盘价']
                             elif sheet.loc[i, '最优价格'] + 2.5 * sheet.loc[i, 'ATR'] < sheet.loc[i, '收盘价']:
-                                sheet.loc[i, '平仓信号'] = 1 if sheet.loc[i, '平仓信号'] == 0.6667 else 0.6667 if sheet.loc[i, '平仓信号'] == 0.3333 else 0.3333
+                                sheet.loc[i, '平仓信号'] = 1 if sheet.loc[i, '平仓信号'] == 0.6667 else 0.6667 if \
+                                sheet.loc[i, '平仓信号'] == 0.3333 else 0.3333
                                 sheet.loc[i, '策略结算价'] = sheet.loc[i, '收盘价']
                             else:
                                 sheet.loc[i, '策略结算价'] = sheet.loc[i, '结算价']
@@ -101,7 +111,8 @@ def test_loop():
                                 sheet.loc[i, '平仓信号'] = 1
                                 sheet.loc[i, '策略结算价'] = sheet.loc[i, '收盘价']
                             elif sheet.loc[i, '最优价格'] - 2.5 * sheet.loc[i, 'ATR'] > sheet.loc[i, '收盘价']:
-                                sheet.loc[i, '平仓信号'] = 1 if sheet.loc[i, '平仓信号'] == 0.6667 else 0.6667 if sheet.loc[i, '平仓信号'] == 0.3333 else 0.3333
+                                sheet.loc[i, '平仓信号'] = 1 if sheet.loc[i, '平仓信号'] == 0.6667 else 0.6667 if \
+                                sheet.loc[i, '平仓信号'] == 0.3333 else 0.3333
                                 sheet.loc[i, '策略结算价'] = sheet.loc[i, '收盘价']
                             else:
                                 sheet.loc[i, '策略结算价'] = sheet.loc[i, '结算价']
@@ -154,8 +165,8 @@ def test_loop():
     for sheet_name in profit_df:
         sheet = profit_df[sheet_name]
         # 取最后一行
-        trade_notional_map[sheet_name] = sheet.iloc[average_days-1]['成交金额(10日平均)']
-        trade_date_series = list(sheet['日期'][average_days-1:])
+        trade_notional_map[sheet_name] = sheet.iloc[average_days - 1]['成交金额(10日平均)']
+        trade_date_series = list(sheet['日期'][average_days - 1:])
     # 将dict数据转换为dataframe 日期为索引列
     trade_notional_df = pd.DataFrame.from_dict(trade_notional_map, orient='index', columns=['成交金额(10日平均)'])
     trade_notional_df.index.name = '品种'
@@ -216,7 +227,7 @@ def test_loop():
                     continue
                 sheet = profit_df[sheet_name]
                 # 删除第一行
-                sheet = sheet.iloc[average_days-1:]
+                sheet = sheet.iloc[average_days - 1:]
                 row = sheet[sheet['日期'] == start_date]
                 if len(row) == 0:
                     continue
@@ -246,7 +257,7 @@ def test_loop():
                 sheet = profit_df[item[0]]
                 row = sheet[sheet['日期'] == start_date]
                 amount = int(each_budget / 4 / 0.30 / row.iloc[0]['策略开仓价'] / row.iloc[0]['合约乘数'])
-                limit = min(3, int(row.iloc[0]['成交量'] * 1/100000))
+                limit = min(3, int(row.iloc[0]['成交量'] * 1 / 100000))
                 if amount > limit:
                     amount = 1 if limit == 0 else limit
                 amount_map[item[0]] = amount * row.iloc[0]['合约乘数']
@@ -282,7 +293,8 @@ def test_loop():
                 if trade_date_series[i + 1] > adjust_date:
                     start_date = trade_date_series[i + 1]
                     adjust_index = i + 1 + period_days
-                    adjust_date = trade_date_series[adjust_index if adjust_index < len(trade_date_series) else (len(trade_date_series) - 1)]
+                    adjust_date = trade_date_series[
+                        adjust_index if adjust_index < len(trade_date_series) else (len(trade_date_series) - 1)]
                     budget_map = {}
                     amount_map = {}
 
@@ -299,7 +311,7 @@ def test_loop():
             # 每一行当日可用资金等于前一日可用资金加上前一日收益
             df.iloc[i, 0] = df.iloc[i - 1, 0] + df.iloc[i - 1, 1]
         # 总收益 / 100000000 * 252 / 交易日数
-        rows = df.iloc[0:(i+1), :]
+        rows = df.iloc[0:(i + 1), :]
         profit = rows.iloc[:, 1].sum()
         df.iloc[i, 2] = profit / 100000000 * 252 / (i + 1) * 100
         # 计算夏普比率 夏普比率=(年化收益率-无风险利率)/年化收益率的标准差
