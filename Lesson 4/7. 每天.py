@@ -168,18 +168,24 @@ for trade_date in trade_date_series:
             amount = 1 if limit == 0 else limit
         amount_map[k] = amount * row['合约乘数'].values[0]
         if (k, '持仓量') not in df.columns:
-            df[(k, '持仓量')] = 0.
-            df[(k, '单位收益')] = 0.
-            df[(k, '持仓收益')] = 0.
+            new_columns = pd.MultiIndex.from_tuples(
+                [
+                    (k, '持仓量'),
+                    (k, '单位收益'),
+                    (k, '持仓收益')
+                ]
+            )
+            new_df = pd.DataFrame(columns=new_columns)
+            df = pd.concat([df, new_df], axis=1)
         budget_map[k] = each_budget
         row_index = sheet[sheet['日期'] == trade_date].index[0]
         amount = amount_map[k] * sheet.iloc[row_index]['开仓信号']
         unit_profit = sheet.iloc[row_index + 1]['策略收益']
         total_profit = unit_profit * amount
         next_date = sheet.iloc[row_index + 1]['日期']
-        df.loc[next_date, (k, '持仓量')] = amount
-        df.loc[next_date, (k, '单位收益')] = unit_profit
-        df.loc[next_date, (k, '持仓收益')] = total_profit
+        df.at[next_date, (k, '持仓量')] = amount
+        df.at[next_date, (k, '单位收益')] = unit_profit
+        df.at[next_date, (k, '持仓收益')] = total_profit
         available_budget += total_profit
     print(budget_map)
     print(amount_map)
@@ -207,8 +213,9 @@ for i in range(1, len(df)):
     # 区间最大年化收益率
     df.iloc[i, 5] = rows.iloc[:, 4].max()
     # 区间最大回撤
-    max_index = rows.iloc[:, 4].idxmax()
-    df.iloc[i, 6] = df.iloc[i, 5] - rows[rows.index > max_index].iloc[:, 4].min()
+    max_return_index = rows[rows.iloc[:, 4] == rows.iloc[:, 4].max()].index[0]
+    min_return_after_max = rows[rows.index > max_return_index].iloc[:, 4].min()
+    df.iloc[i, 6] = df.iloc[i, 5] - min_return_after_max
     # 夏普比率
     df.iloc[i, 7] = (rows.iloc[:, 4].mean() - 0.015) / rows.iloc[:, 4].std()
     # 卡玛比率
