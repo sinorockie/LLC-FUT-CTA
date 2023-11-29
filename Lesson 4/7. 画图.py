@@ -72,9 +72,6 @@ plt.clf()
 # 画折现图 显示10个刻度 第一个和最后一个要显示
 profit_df['夏普比率'].plot()
 profit_df['Calmar Ratio(卡玛比率)'].plot()
-# 夏普比率 线为红色 Calmar Ratio(卡玛比率) 线为蓝色
-plt.plot(profit_df['夏普比率'], color='b')
-plt.plot(profit_df['Calmar Ratio(卡玛比率)'], color='g')
 plt.gcf().set_size_inches(20, 10)
 plt.legend()
 # 新增一个图层

@@ -5,6 +5,36 @@ from matplotlib import pyplot as plt
 
 average_days = 10
 
+
+def draw(trade_notional_map: dict):
+    # 将dict数据转换为dataframe 日期为索引列
+    trade_notional_df = pd.DataFrame.from_dict(trade_notional_map, orient='index', columns=['成交金额(10日平均)'])
+    trade_notional_df.index.name = '品种'
+    # 按照成交金额(10日平均)排序从大到小排序
+    trade_notional_df.fillna(0, inplace=True)
+    trade_notional_df = trade_notional_df.sort_values(by=['成交金额(10日平均)'], ascending=False)
+    trade_notional_df.plot.bar()
+    # 大于等于50亿画一条横线
+    plt.axhline(y=5000000000, color='r', linestyle='-')
+    # 小于50亿的品种背景灰色
+    for i in range(len(trade_notional_df)):
+        if trade_notional_df.iloc[i]['成交金额(10日平均)'] < 5000000000:
+            plt.axvspan(i - 0.5, i + 0.5, facecolor='gray', alpha=0.3)
+    # 导出图片
+    if platform.system() == 'Windows':
+        font = ['Microsoft YaHei']
+    else:
+        font = ['Songti SC']
+    plt.rcParams['font.sans-serif'] = font
+    # x轴标签旋转0度
+    plt.xticks(rotation=0)
+    plt.xlabel('')
+    # 宽度
+    plt.gcf().set_size_inches(18, 7)
+    # 保存图片
+    plt.savefig("../output/期货量化实践_成交金额(10日平均).png")
+
+
 carry_df = pd.read_excel('../output/期货量化实践_主力合约复权价格_次主力合约价格_合并.xlsx', None)
 
 with pd.ExcelWriter('../output/期货量化实践_每日单位收益.xlsx') as writer:
@@ -63,35 +93,8 @@ trade_date_series = []
 for sheet_name in profit_df:
     sheet = profit_df[sheet_name]
     # 取最后一行
-    trade_notional_map[sheet_name] = sheet.iloc[average_days - 1]['成交金额(10日平均)']
     trade_date_series = list(sheet['日期'][average_days:len(sheet) - 1])
-
-# 将dict数据转换为dataframe 日期为索引列
-trade_notional_df = pd.DataFrame.from_dict(trade_notional_map, orient='index', columns=['成交金额(10日平均)'])
-trade_notional_df.index.name = '品种'
-# 按照成交金额(10日平均)排序从大到小排序
-trade_notional_df.fillna(0, inplace=True)
-trade_notional_df = trade_notional_df.sort_values(by=['成交金额(10日平均)'], ascending=False)
-trade_notional_df.plot.bar()
-# 大于等于50亿画一条横线
-plt.axhline(y=5000000000, color='r', linestyle='-')
-# 小于50亿的品种背景灰色
-for i in range(len(trade_notional_df)):
-    if trade_notional_df.iloc[i]['成交金额(10日平均)'] < 5000000000:
-        plt.axvspan(i - 0.5, i + 0.5, facecolor='gray', alpha=0.3)
-# 导出图片
-if platform.system() == 'Windows':
-    font = ['Microsoft YaHei']
-else:
-    font = ['Songti SC']
-plt.rcParams['font.sans-serif'] = font
-# x轴标签旋转0度
-plt.xticks(rotation=0)
-plt.xlabel('')
-# 宽度
-plt.gcf().set_size_inches(18, 7)
-# 保存图片
-plt.savefig("../output/期货量化实践_成交金额(10日平均).png")
+    break
 
 available_budget = 5000000
 
@@ -121,6 +124,8 @@ for trade_date in trade_date_series:
         sheet = profit_df[sheet_name]
         trade_notional_map[sheet_name] = sheet[sheet['日期'] == trade_date]['成交金额(10日平均)'].values[0]
     # 过滤掉成交金额(10日平均)小于50亿的品种
+    if trade_date == pd.Timestamp('2021-12-06'):
+        draw(trade_notional_map)
     trade_notional_map = {k: v for k, v in trade_notional_map.items() if v >= 5000000000}
     for sheet_name in profit_df:
         # ZC后期停止交易 剔除
@@ -140,13 +145,18 @@ for trade_date in trade_date_series:
     negative_carry_ma10_map_list = sorted(negative_carry_ma10_map.items(), key=lambda x: x[1], reverse=True)
     carry_ma10_map_last_20 = negative_carry_ma10_map_list[-int(len(negative_carry_ma10_map_list) * 0.20):]
     print(carry_ma10_map_last_20)
+    excel_pd = pd.DataFrame(sorted(carry_ma10_map.items(), key=lambda x: x[1], reverse=True), columns=['品种', 'Carry收益(10日平均)'])
+    excel_pd['开仓信号'] = 0.
     # 过滤掉开仓信号为0的品种
     for item in carry_ma10_map_first_20 + carry_ma10_map_last_20:
         sheet = profit_df[item[0]]
         row = sheet[sheet['日期'] == trade_date]
+        excel_pd.loc[excel_pd['品种'] == item[0], '开仓信号'] = row.iloc[0]['开仓信号']
         if len(row) == 0 or row.iloc[0]['开仓信号'] == 0:
             continue
         amount_map[item[0]] = 0
+    if trade_date == pd.Timestamp('2021-12-06'):
+        excel_pd.to_excel('../output/期货量化实践_开仓信号.xlsx', sheet_name='开仓信号', index=False)
     each_budget = available_budget / len(amount_map)
     # 每个品种的持仓量
     for k in amount_map.keys():
