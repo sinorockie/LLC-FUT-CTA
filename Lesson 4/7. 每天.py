@@ -73,14 +73,14 @@ with pd.ExcelWriter('../output/期货量化实践_每日单位收益.xlsx') as w
                 # 卖空
                 sheet.loc[i, '最优价格'] = sheet.loc[i, '最低价']
                 sheet.loc[i, '策略开仓价'] = sheet.loc[i, '开盘价']
-                margin_price = sheet.loc[i, '最优价格'] + 2.5 * sheet.loc[i, 'ATR']
+                margin_price = sheet.loc[i, '最优价格'] + 2.5 * sheet.loc[i - 1, 'ATR']
                 sheet.loc[i, '策略结算价'] = margin_price if margin_price < sheet.loc[i, '收盘价'] else sheet.loc[i, '收盘价']
                 sheet.loc[i, '策略收益'] = sheet.loc[i, '策略开仓价'] - sheet.loc[i, '策略结算价'] - (sheet.loc[i, '策略开仓价'] + sheet.loc[i, '策略结算价']) * 2 / 100 / 100
             else:
                 # 买多
                 sheet.loc[i, '最优价格'] = sheet.loc[i, '最高价']
                 sheet.loc[i, '策略开仓价'] = sheet.loc[i, '开盘价']
-                margin_price = sheet.loc[i, '最优价格'] - 2.5 * sheet.loc[i, 'ATR']
+                margin_price = sheet.loc[i, '最优价格'] - 2.5 * sheet.loc[i - 1, 'ATR']
                 sheet.loc[i, '策略结算价'] = margin_price if margin_price > sheet.loc[i, '收盘价'] else sheet.loc[i, '收盘价']
                 sheet.loc[i, '策略收益'] = sheet.loc[i, '策略结算价'] - sheet.loc[i, '策略开仓价'] - (sheet.loc[i, '策略开仓价'] + sheet.loc[i, '策略结算价']) * 2 / 100 / 100
         sheet.to_excel(writer, sheet_name=sheet_name, index=False)
@@ -92,9 +92,11 @@ trade_date_series = []
 
 for sheet_name in profit_df:
     sheet = profit_df[sheet_name]
+    sheet['成交金额(10日平均)'] = sheet['成交金额(10日平均)'].shift(1)
+    sheet['Carry收益(10日平均)'] = sheet['Carry收益(10日平均)'].shift(1)
+    sheet['开仓信号'] = sheet['开仓信号'].shift(1)
     # 取最后一行
     trade_date_series = list(sheet['日期'][average_days:len(sheet) - 1])
-    break
 
 available_budget = 5000000
 
@@ -132,8 +134,7 @@ for trade_date in trade_date_series:
         if sheet_name not in trade_notional_map or sheet_name == 'ZC':
             continue
         sheet = profit_df[sheet_name]
-        row = sheet[sheet['日期'] == trade_date]
-        carry_ma10_map[sheet_name] = row.iloc[0]['Carry收益(10日平均)']
+        carry_ma10_map[sheet_name] = sheet[sheet['日期'] == trade_date]['Carry收益(10日平均)'].values[0]
     print(f'当前日期: {trade_date.strftime("%Y-%m-%d")}')
     # 从大到小排序的最大前20%品种
     positive_carry_ma10_map = {k: v for k, v in carry_ma10_map.items() if v > 0.}
@@ -162,7 +163,7 @@ for trade_date in trade_date_series:
     for k in amount_map.keys():
         sheet = profit_df[k]
         row = sheet[sheet['日期'] == trade_date]
-        amount = int(each_budget / 4 / 0.15 / row['策略开仓价'].values[0] / row['合约乘数'].values[0])
+        amount = int(each_budget / 4 / 0.15 / row['策略开仓价'].values[0] / row['合约乘数'].values[0] * row['开仓信号'].values[0])
         limit = min(5, int(row['成交量'].values[0] * 1 / 100000))
         if amount > limit:
             amount = 1 if limit == 0 else limit
